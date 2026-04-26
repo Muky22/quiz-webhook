@@ -1,4 +1,12 @@
-﻿module.exports = async (req, res) => {
+﻿const admin = require("firebase-admin")
+
+if (!admin.apps.length) {
+  admin.initializeApp()
+}
+
+const db = admin.firestore()
+
+module.exports = async (req, res) => {
   try {
     const event = req.body
 
@@ -6,12 +14,15 @@
 
     if (event?.type === "checkout.session.completed") {
       const session = event.data.object
-
-      const email = session?.customer_email
+      const email = session?.customer_details?.email
 
       console.log("PAID USER:", email)
 
-      // sem potom dáme Firestore save
+      if (email) {
+        await db.collection("players").doc(email).set({
+          paid: true
+        })
+      }
     }
 
     res.status(200).json({ received: true })
